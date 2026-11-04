@@ -293,10 +293,14 @@ function createEvent({
 
   const members = getCircleMembers(circleId);
   const memberIds = members.map((member) => member.memberId);
-  const selectedIds =
-    targetMemberIds.length > 0
-      ? targetMemberIds.filter((memberId) => memberIds.includes(memberId))
-      : memberIds;
+  const normalizedTargetIds = Array.isArray(targetMemberIds)
+    ? targetMemberIds.filter((memberId) => memberIds.includes(memberId))
+    : [];
+
+  if (normalizedTargetIds.length === 0) {
+    throw new Error('参加者を1人以上選択してください');
+  }
+
   const event = {
     eventId: createId('event'),
     circleId,
@@ -304,7 +308,7 @@ function createEvent({
     title: safeTitle,
     amount: numericAmount,
     notes: normalizeString(notes),
-    targetMemberIds: selectedIds,
+    targetMemberIds: normalizedTargetIds,
     deadline: normalizeDateValue(deadline),
     paymentStatus: {},
     createdAt: new Date().toISOString(),
@@ -957,6 +961,12 @@ function handleAddEventSubmit(event) {
   const targetMemberIds = [...document.querySelectorAll('#participant-checkbox-list input:checked')].map(
     (input) => input.value
   );
+
+  if (targetMemberIds.length === 0) {
+    alert('参加者を1人以上選択してください');
+    return;
+  }
+
   try {
     const created = createEvent({
       circleId: appState.currentCircleId,
